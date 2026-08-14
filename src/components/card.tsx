@@ -1,101 +1,164 @@
-
 import { Link } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import api from "../utils/crud-api";
 
-export default function Card(props) {
+export default function Card(props: any) {
 
-  const delPhone = async (id: string) => {
-    console.log("Delete phone with id:", id);
-        try {
-            const res = await api.delete('phones/' + id);
-            props.refresh();
-            console.log(res);
-        } catch(err) {
-            console.log(err);
-        }
-/*
-    Alert.alert(
-      "Are you sure?", // Title
-      "Do you really want to delete this file?", // Message
-      [
-        {
-          //text: "Cancel",
-          //onPress: () => console.log("Cancel Pressed"),
-          //style: "cancel" // Applies default cancel styling (iOS only)
-        },
-        { 
-          text: "Delete", 
-          onPress: () => console.log("Delete Pressed"),
-          style: "destructive" // Applies red text styling (iOS only)
-        }
-      ],
-      { cancelable: true } // Allows closing the popup by tapping outside (Android only)
-    );
-    */
+  const executeDelete = async (id: string) => {
+    try {
+      await api.delete('phones/' + id);
+      props.refresh();
+    } catch (err) {
+      console.log("Delete error:", err);
+      Alert.alert("GAME ERROR", "CANNOT DELETE ITEM!");
+    }
   };
 
-    return (
-        <View style={styles.container} key={props.phone.id}>
-          <View style={styles.text}>
-            <Text style={styles.text}>{props.phone.name}</Text>
-            <Text style={styles.text}>{props.phone.sect}</Text>
-            <Text style={styles.text}>Tel No.: {props.phone.tel}</Text>
-          </View>
-          <View style={{flexDirection: 'row'}}>
-              <Link href={{
-                pathname: "/editPhone",
-                params: { 
-                    id: props.phone.id, 
-                    name:  props.phone.name,
-                    sect: props.phone.sect,
-                    tel: props.phone.tel,
-                  },
-                }}            
-                push style={{backgroundColor: 'yellow', padding: 10,
-                    margin: 5, borderRadius: 5,}}>
-                    <Text style={{
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'black',
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                    }}>Edit</Text>
-            </Link>
-            <TouchableOpacity onPress={()=>delPhone(props.phone.id)}
-               style={{backgroundColor: 'red', padding: 10,
-                    margin: 5, borderRadius: 5,}}>
-                <Text
-                  style={{padding: 5, margin: 5, borderRadius: 5, color: 'white', fontWeight: 'bold', textAlign: 'center',}}>
-                    Delete
-                </Text>
-            </TouchableOpacity>
-          </View>
+  const delPhone = (id: string, name: string) => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(`[SYSTEM ALERT] DELETE PLAYER: "${name}" ?`);
+      if (confirmed) executeDelete(id);
+    } else {
+      Alert.alert(
+        "[ ! ] CONFIRM DELETE",
+        `DELETE RECORD: "${name}" ?`,
+        [
+          { text: "CANCEL", style: "cancel" },
+          { text: "DELETE", onPress: () => executeDelete(id), style: "destructive" }
+        ],
+        { cancelable: true }
+      );
+    }
+  };
+
+  return (
+    <View style={styles.card}>
+      {/* Phone Data Container */}
+      <View style={styles.infoContainer}>
+        <View style={styles.nameRow}>
+          <Text style={styles.pixelIcon}>👾</Text>
+          <Text style={styles.nameText}>{props.phone.name}</Text>
         </View>
-    )
+        
+        <View style={styles.badgeRow}>
+          <Text style={styles.badge}>GUILD: {props.phone.sect}</Text>
+        </View>
+        <Text style={styles.telText}>☎ TEL: {props.phone.tel}</Text>
+      </View>
+
+      {/* 8-bit Action Buttons */}
+      <View style={styles.actionGroup}>
+        <Link
+          href={{
+            pathname: "/editPhone",
+            params: { 
+              id: props.phone.id, 
+              name: props.phone.name,
+              sect: props.phone.sect,
+              tel: props.phone.tel,
+            },
+          }}            
+          push 
+          style={styles.btnEdit}
+        >
+          <Text style={styles.btnEditText}>EDIT</Text>
+        </Link>
+
+        <TouchableOpacity 
+          onPress={() => delPhone(props.phone.id, props.phone.name)}
+          style={styles.btnDelete}
+        >
+          <Text style={styles.btnDeleteText}>DEL</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 }
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  card: {
+    backgroundColor: '#1E1E2E',
     flexDirection: 'row',
     alignItems: "center",
-    justifyContent:"space-between",
-    borderRadius: 10,
-    padding: 5,
-    marginVertical: 5,
-    marginHorizontal: 20,
-    backgroundColor: '#47F',
+    justifyContent: "space-between",
+    borderWidth: 3,
+    borderColor: '#3D3D5C',
+    borderBottomWidth: 6,
+    borderRightWidth: 6,
+    padding: 12,
+    marginVertical: 6,
+    marginHorizontal: 15,
   },
-  list: {
-    backgroundColor: '#47F',
-    padding: 10,
-    margin: 5,
-    borderRadius: 10,
-    borderColor: 'red',
+  infoContainer: {
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 4,
   },
-  text: {
-    color: 'white',
-    fontSize: 18,
-  }
+  pixelIcon: {
+    marginRight: 6,
+    fontSize: 14,
+  },
+  nameText: {
+    color: '#00FFFF',
+    fontSize: 17,
+    fontWeight: '900',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    marginVertical: 2,
+  },
+  badge: {
+    backgroundColor: '#FF0055',
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 11,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  telText: {
+    color: '#A0A0B0',
+    fontSize: 13,
+    marginTop: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  actionGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  btnEdit: {
+    backgroundColor: '#FFE600',
+    borderWidth: 2,
+    borderColor: '#000',
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  btnEditText: {
+    color: '#000',
+    fontWeight: '900',
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  btnDelete: {
+    backgroundColor: '#FF0055',
+    borderWidth: 2,
+    borderColor: '#000',
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  btnDeleteText: {
+    color: '#FFF',
+    fontWeight: '900',
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
 });

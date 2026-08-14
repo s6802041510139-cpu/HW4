@@ -1,0 +1,17 @@
+{
+  "phones": [
+    {
+      "id": "NAFy7pCwpd8",
+      "name": "T",
+      "sect": "TCT",
+      "tel": "67"
+    },
+    {
+      "id": "HPl5OfR6kHg",
+      "name": "TTTTT",
+      "sect": "CED",
+      "tel": "47"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

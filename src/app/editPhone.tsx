@@ -1,107 +1,181 @@
+import api from '@/utils/crud-api';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { RadioButton } from 'react-native-paper'; // npm install ....
-import api from '../utils/crud-api';
+import { Alert, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { RadioButton } from 'react-native-paper';
 
-const EditPhone = () => {
-    const {id, name, sect, tel} = useLocalSearchParams();
-    const [newName, setNewName] = useState(name);
-    const [newSect, setNewSect] = useState(sect);
-    const [newTel, setNewTel] = useState(tel);
+export default function EditPhone() {
+    const { id, name, sect, tel } = useLocalSearchParams<{ id: string; name: string; sect: string; tel: string }>();
+    const [newName, setNewName] = useState(name || '');
+    const [newSect, setNewSect] = useState(sect || '');
+    const [newTel, setNewTel] = useState(tel || '');
     const router = useRouter();
 
     const updatePhone = async () => {
-        if(name===''|| sect==='' || tel==='') {
-            console.log("Please Enter phone info");
-            Alert.alert("Please Enter phone info");
+        if (!newName.trim() || !newSect.trim() || !newTel.trim()) {
+            Alert.alert("SYS_WARNING", "PLEASE FILL IN ALL ATTRIBUTES!");
             return;
         }
         try {
-            const res = await api.put('phones/'+id, {
-                name: newName,
-                sect: newSect,
-                tel: newTel
+            await api.put('phones/' + id, {
+                name: newName.trim(),
+                sect: newSect.trim(),
+                tel: newTel.trim(),
             });
-            router.navigate('/');
-            //console.log(res);
-        } catch(err) {
-            console.log(err);
+            if (router.canGoBack()) router.back();
+            else router.replace('/');
+        } catch(err: any) {
+            Alert.alert("SYS_ERROR", err.message || "COULD NOT UPDATE STATS!");
         }
-    }
+    };
 
-    return(
+    return (
         <View style={styles.container}>
-            <Text style={styles.title}>Update Information</Text>
-            <Text style={{fontWeight: 'bold'}}>Name: </Text>
-            <TextInput style={styles.input}
-                    value={newName}
-                    onChangeText={(text)=> setNewName(text)}
-                    placeholder='Your Name' />
-            <RadioButton.Group  value={newSect}
-                onValueChange={value => setNewSect(value)}>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                    <Text style={{fontWeight: 'bold'}}>Section: </Text>
-                    <RadioButton value="CED" />
-                    <Text>CED</Text>
-                    <RadioButton value="TCT" />
-                    <Text>TCT</Text>
-                </View>
-            </RadioButton.Group>
-            <Text style={{fontWeight: 'bold'}}>Tel: </Text>
-            <TextInput style={styles.input}
-                    value={newTel}
-                    onChangeText={(text)=> setNewTel(text)}
-                    placeholder='Phone No.' />
+            <View style={styles.frameBox}>
+                <Text style={styles.title}>[ ★ UPGRADE STATS ★ ]</Text>
 
-            <View style={{flexDirection: 'row', justifyContent: 'center', marginTop: 20,}}>
-                <TouchableOpacity onPress={()=>router.back()}
-                    style={{backgroundColor: 'rgb(209, 182, 2)', padding: 10,
-                        borderRadius: 5, marginRight: 10,
-                    }}>
-                    <Text style={{color: 'white', fontWeight: 'bold',
-                        textAlign: 'center',
-                    }}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={()=>updatePhone()}
-                    style={{backgroundColor: 'rgb(200, 100, 50)', padding: 10,
-                        borderRadius: 5,
-                    }}>
-                    <Text style={{color: 'white', fontWeight: 'bold',
-                        textAlign: 'center',
-                    }}>Update Info</Text>
-                </TouchableOpacity>
+                {/* Name */}
+                <Text style={styles.label}>{'>'} PLAYER NAME:</Text>
+                <TextInput 
+                    style={styles.input}
+                    value={newName}
+                    onChangeText={setNewName}
+                    placeholder='ENTER NAME...'
+                    placeholderTextColor="#555"
+                />
+
+                {/* Section Radio */}
+                <Text style={styles.label}>{'>'} GUILD / SECTION:</Text>
+                <RadioButton.Group value={newSect} onValueChange={setNewSect}>
+                    <View style={styles.radioRow}>
+                        <View style={styles.radioItem}>
+                            <RadioButton value="CED" color="#FFE600" uncheckedColor="#555" />
+                            <Text style={styles.radioText}>CED</Text>
+                        </View>
+                        <View style={styles.radioItem}>
+                            <RadioButton value="TCT" color="#FFE600" uncheckedColor="#555" />
+                            <Text style={styles.radioText}>TCT</Text>
+                        </View>
+                    </View>
+                </RadioButton.Group>
+
+                {/* Tel */}
+                <Text style={styles.label}>{'>'} COMMS NO. (TEL):</Text>
+                <TextInput 
+                    style={styles.input}
+                    value={newTel}
+                    onChangeText={setNewTel}
+                    placeholder='ENTER TEL...'
+                    placeholderTextColor="#555"
+                    keyboardType="phone-pad"
+                />
+
+                {/* Controls */}
+                <View style={styles.buttonRow}>
+                    <TouchableOpacity 
+                        onPress={() => router.canGoBack() ? router.back() : router.replace('/')} 
+                        style={styles.btnCancel}
+                    >
+                        <Text style={styles.btnText}>{'< ESC'}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={updatePhone} style={styles.btnUpdate}>
+                        <Text style={[styles.btnText, { color: '#000' }]}>{'APPLY >'}</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </View>
-    )
+    );
 }
-export default EditPhone;
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        margin: 10,
+        backgroundColor: '#0D0E15',
+        justifyContent: 'center',
+        padding: 15,
+    },
+    frameBox: {
+        backgroundColor: '#181824',
+        borderWidth: 4,
+        borderColor: '#FFE600',
+        borderBottomWidth: 8,
+        borderRightWidth: 8,
         padding: 20,
-        backgroundColor: '#ddd',
     },
-    title:{
-        fontSize: 32,
-        color: '#47F',
-        fontWeight: 'bold',
+    title: {
         textAlign: 'center',
+        fontSize: 18,
+        fontWeight: '900',
+        color: '#00FFFF',
+        marginBottom: 20,
+        letterSpacing: 1.5,
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     },
-    form: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        backgroundColor: '#DDF',
-        paddingHorizontal: 20,
+    label: {
+        color: '#FFE600',
+        fontWeight: 'bold',
+        fontSize: 13,
+        marginTop: 10,
+        marginBottom: 5,
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     },
     input: {
-        height: 50,
-        borderColor: '#ccc',
+        backgroundColor: '#000000',
+        borderWidth: 2,
+        borderColor: '#3D3D5C',
+        color: '#FFE600',
         padding: 10,
-        borderRadius: 5,
-        backgroundColor: 'white',
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    },
+    radioRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 15,
+        marginVertical: 4,
+    },
+    radioItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    radioText: {
+        color: '#FFF',
+        fontWeight: 'bold',
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 25,
+    },
+    btnCancel: {
+        flex: 1,
+        backgroundColor: '#555',
+        borderWidth: 2,
+        borderColor: '#000',
+        borderBottomWidth: 4,
+        borderRightWidth: 4,
+        paddingVertical: 12,
+        marginRight: 8,
+        alignItems: 'center',
+    },
+    btnUpdate: {
+        flex: 1,
+        backgroundColor: '#FFE600',
+        borderWidth: 2,
+        borderColor: '#000',
+        borderBottomWidth: 4,
+        borderRightWidth: 4,
+        paddingVertical: 12,
+        marginLeft: 8,
+        alignItems: 'center',
+    },
+    btnText: {
+        color: '#FFF',
+        fontWeight: '900',
+        fontSize: 14,
+        letterSpacing: 1.5,
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     },
 });
